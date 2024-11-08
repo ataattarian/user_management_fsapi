@@ -1,22 +1,21 @@
 import grpc
-from fastapi import Body, APIRouter, HTTPException
+from fastapi import Body, APIRouter, HTTPException, Depends
 from schemas import LoginInput, UserProfileInput
 from grpc_client import get_user, get_users, update_user, register_user, delete_user, login_req
 from auth import create_access_token, get_current_user
 
+public_router = APIRouter()
+protected_router = APIRouter(dependencies=[Depends(get_current_user)])
 
-router = APIRouter()
-
-
-@router.get("/users/")
-async def get_users_list():
+@protected_router.get("/users/")
+async def get_users_list(current_user: dict = Depends(get_current_user)):
     try:
         return get_users()
     except grpc.RpcError as e:
         raise HTTPException(status_code=500, detail=e.details())
 
 
-@router.get("/user_info/{user_id}")
+@protected_router.get("/user_info/{user_id}")
 async def get_user_info(user_id: int):
     try:
         return get_user(user_id)
@@ -24,7 +23,7 @@ async def get_user_info(user_id: int):
         raise HTTPException(status_code=404, detail=e.details())
 
 
-@router.post("/register")
+@public_router.post("/register")
 async def register(data: UserProfileInput = Body()):
     try:
         user = register_user(data)
@@ -41,18 +40,18 @@ async def register(data: UserProfileInput = Body()):
             raise HTTPException(status_code=500, detail="Internal server error.")
 
 
-@router.post("/login")
+@public_router.post("/login")
 async def login(data: LoginInput = Body()):
     resp = login_req(data)
-    print(resp.message)
+
     if resp.valid:
-        access_token = create_access_token(data={"sub": data.username})
+        access_token = create_access_token(data={"username": data.username})
         return {"access_token": access_token, "token_type": "bearer"}
     else:
         raise HTTPException(status_code=401, detail="username or password incorrect")
 
 
-@router.put("/user_info/{user_id}")
+@protected_router.put("/user_info/{user_id}")
 async def update_profile(user_id: int, data: UserProfileInput = Body()):
     try:
         return update_user(user_id, data)
@@ -64,7 +63,7 @@ async def update_profile(user_id: int, data: UserProfileInput = Body()):
         raise HTTPException(status_code=500, detail="Internal server error.")
 
 
-@router.delete("/user_info/{user_id}")
+@protected_router.delete("/user_info/{user_id}")
 async def delete_profile(user_id: int):
     try:
         response = delete_user(user_id)
