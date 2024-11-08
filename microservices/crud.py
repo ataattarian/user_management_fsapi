@@ -6,6 +6,8 @@ from schemas import UserCreate
 def get_user(db: Session, user_id: int):
     return db.query(User).filter(User.id == user_id).first()
 
+def validate_user(db: Session, data):
+    return db.query(User).filter(User.username == data.username,User.password == data.password).first()
 
 def get_users(db: Session):
     return db.query(User).all()

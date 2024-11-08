@@ -1,7 +1,7 @@
 import grpc
 from concurrent import futures
 from proto_generated import user_pb2, user_pb2_grpc
-from crud import get_user, get_users, create_user, delete_user, update_user
+from crud import get_user, get_users, create_user, delete_user, update_user, validate_user
 from database import engine, Base, SessionLocal
 from sqlalchemy.exc import IntegrityError
 
@@ -81,6 +81,15 @@ class UserService(user_pb2_grpc.UserServiceServicer):
             )
         finally:
             db.close()
+
+    def ValidateUser(self, request, context):
+        db = SessionLocal()
+        user = validate_user(db, data=request)
+
+        if user:
+            return user_pb2.LoginResponse(valid=True, message="User authenticated successfully")
+
+        return user_pb2.LoginResponse(valid=False, message="Invalid credentials")
 
 
 # Start gRPC server

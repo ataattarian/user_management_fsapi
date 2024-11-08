@@ -1,7 +1,9 @@
 import grpc
 from fastapi import Body, APIRouter, HTTPException
 from schemas import LoginInput, UserProfileInput
-from grpc_client import get_user, get_users, update_user, register_user, delete_user
+from grpc_client import get_user, get_users, update_user, register_user, delete_user, login_req
+from auth import create_access_token, get_current_user
+
 
 router = APIRouter()
 
@@ -41,7 +43,13 @@ async def register(data: UserProfileInput = Body()):
 
 @router.post("/login")
 async def login(data: LoginInput = Body()):
-    return {"data": data}
+    resp = login_req(data)
+    print(resp.message)
+    if resp.valid:
+        access_token = create_access_token(data={"sub": data.username})
+        return {"access_token": access_token, "token_type": "bearer"}
+    else:
+        raise HTTPException(status_code=401, detail="username or password incorrect")
 
 
 @router.put("/user_info/{user_id}")
