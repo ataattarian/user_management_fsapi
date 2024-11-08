@@ -1,0 +1,30 @@
+version: "3.8"
+
+services:
+  gateway:
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+    image: gateway
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./proto_generated:/app/proto_generated
+    depends_on:
+      - microservices
+    environment:
+      - MICRO_SERVICE_HOST=microservices
+      - MICRO_SERVICE_PORT=50051
+
+  microservices:
+    build:
+      context: ./microservices
+      dockerfile: Dockerfile
+    image: microservices
+    ports:
+      - "50051:50051"
+    volumes:
+      - ./proto_generated:/app/proto_generated
+      - ./users.db:/app/users.db
+    environment:
+      - DATABASE_URL=sqlite:///./users.db
