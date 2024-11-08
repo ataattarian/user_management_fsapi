@@ -46,10 +46,14 @@ async def login(data: LoginInput = Body()):
 
 @router.put("/user_info/{user_id}")
 async def update_profile(user_id: int, data: UserProfileInput = Body()):
-    user = update_user(user_id, data)
-    if not user.id:
-        raise HTTPException(status_code=404, detail="User not found")
-    return user
+    try:
+        return update_user(user_id, data)
+    except grpc.RpcError as e:
+        if e.code() == grpc.StatusCode.NOT_FOUND:
+            raise HTTPException(status_code=404, detail="User not found.")
+        elif e.code() == grpc.StatusCode.ALREADY_EXISTS:
+            raise HTTPException(status_code=409, detail="Username already exists.")
+        raise HTTPException(status_code=500, detail="Internal server error.")
 
 
 @router.delete("/user_info/{user_id}")

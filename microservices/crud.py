@@ -19,15 +19,20 @@ def create_user(db: Session, user: UserCreate):
     return db_user
 
 
-def update_user(db: Session, user_id: int, username: str, first_name: str, last_name: str, password: str):
-    user = get_user(db, user_id)
-    if user:
-        user.username = username
-        user.first_name = first_name
-        user.last_name = last_name
-        user.password = password
-        db.commit()
-        db.refresh(user)
+def update_user(db: Session, data):
+    user = db.query(User).filter(User.id ==data.id).first()
+
+    if not user:
+        return None
+
+    user.username = data.username or user.username
+    user.first_name = data.first_name or user.first_name
+    user.last_name = data.last_name or user.last_name
+    user.password = data.password or user.password
+
+    db.commit()
+    db.refresh(user)
+
     return user
 
 

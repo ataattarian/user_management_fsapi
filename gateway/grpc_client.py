@@ -1,4 +1,6 @@
 import os
+from http.client import responses
+
 import grpc
 from proto_generated import user_pb2, user_pb2_grpc
 from schemas import LoginInput, UserProfileInput
@@ -49,5 +51,17 @@ def register_user(data: UserProfileInput):
 
 
 def update_user(user_id: int, data: UserProfileInput):
-    return client.UpdateUser(user_pb2.UpdateUserRequest(id=user_id, username=data.username, first_name=data.first_name,
-                                                        last_name=data.last_name, password=data.password))
+    response = client.UpdateUser(user_pb2.UpdateUserRequest(
+        id=user_id,
+        username=data.username,
+        first_name=data.first_name,
+        last_name=data.last_name,
+        password=data.password
+    ))
+    user_data = {
+        "id": response.id,
+        "username": response.username,
+        "first_name": response.first_name,
+        "last_name": response.last_name,
+    }
+    return user_data

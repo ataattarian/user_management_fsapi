@@ -1,10 +1,9 @@
 import grpc
 from concurrent import futures
 from proto_generated import user_pb2, user_pb2_grpc
-from crud import get_user, get_users, create_user, delete_user
+from crud import get_user, get_users, create_user, delete_user, update_user
 from database import engine, Base, SessionLocal
 from sqlalchemy.exc import IntegrityError
-
 
 Base.metadata.create_all(bind=engine)
 
@@ -54,6 +53,25 @@ class UserService(user_pb2_grpc.UserServiceServicer):
         success = delete_user(db, user_id=request.id) is not None
         db.close()
         return user_pb2.DeleteUserResponse(success=success)
+
+    def UpdateUser(self, request, context):
+        db = SessionLocal()
+        try:
+            updated_user = update_user(db, data=request)
+
+            if not updated_user:
+                context.set_code(grpc.StatusCode.NOT_FOUND)
+                context.set_details("User not found.")
+                return user_pb2.UserResponse()
+
+            return user_pb2.UserResponse(
+                id=updated_user.id,
+                username=updated_user.username,
+                first_name=updated_user.first_name,
+                last_name=updated_user.last_name
+            )
+        finally:
+            db.close()
 
 
 # Start gRPC server
