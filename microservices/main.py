@@ -50,9 +50,18 @@ class UserService(user_pb2_grpc.UserServiceServicer):
 
     def DeleteUser(self, request, context):
         db = SessionLocal()
-        success = delete_user(db, user_id=request.id) is not None
-        db.close()
-        return user_pb2.DeleteUserResponse(success=success)
+        try:
+            success = delete_user(db, request.id)
+
+            if not success:
+                context.set_code(grpc.StatusCode.NOT_FOUND)
+                context.set_details("User not found.")
+                return user_pb2.DeleteUserResponse(success=False)
+
+            return user_pb2.DeleteUserResponse(success=True)
+
+        finally:
+            db.close()
 
     def UpdateUser(self, request, context):
         db = SessionLocal()

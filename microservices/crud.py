@@ -20,7 +20,7 @@ def create_user(db: Session, user: UserCreate):
 
 
 def update_user(db: Session, data):
-    user = db.query(User).filter(User.id ==data.id).first()
+    user = db.query(User).filter(User.id == data.id).first()
 
     if not user:
         return None
@@ -37,9 +37,11 @@ def update_user(db: Session, data):
 
 
 def delete_user(db: Session, user_id: int):
-    db_user = get_user(db, user_id)
-    if db_user:
-        db.delete(db_user)
-        db.commit()
-        return db_user
-    return None
+    user = db.query(User).filter(User.id == user_id).first()
+
+    if not user:
+        return False
+
+    db.delete(user)
+    db.commit()
+    return True

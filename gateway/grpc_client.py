@@ -65,3 +65,6 @@ def update_user(user_id: int, data: UserProfileInput):
         "last_name": response.last_name,
     }
     return user_data
+
+def delete_user(user_id: int):
+    return client.DeleteUser(user_pb2.DeleteUserRequest(id=user_id))

@@ -1,7 +1,7 @@
 import grpc
 from fastapi import Body, APIRouter, HTTPException
 from schemas import LoginInput, UserProfileInput
-from grpc_client import get_user, get_users, update_user, register_user
+from grpc_client import get_user, get_users, update_user, register_user, delete_user
 
 router = APIRouter()
 
@@ -58,4 +58,15 @@ async def update_profile(user_id: int, data: UserProfileInput = Body()):
 
 @router.delete("/user_info/{user_id}")
 async def delete_profile(user_id: int):
-    return {"user_id": user_id}
+    try:
+        response = delete_user(user_id)
+
+        if not response.success:
+            raise HTTPException(status_code=404, detail="User not found.")
+
+        return {"detail": "User deleted successfully."}
+
+    except grpc.RpcError as e:
+        if e.code() == grpc.StatusCode.NOT_FOUND:
+            raise HTTPException(status_code=404, detail="User not found.")
+        raise HTTPException(status_code=500, detail="Internal server error.")
